@@ -1,0 +1,223 @@
+{
+    "info": {
+        "name": "FastAPI Payment System",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Auth - Register User",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{base_url}}/auth/register",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"phone_number\": \"1234567890\",\n    \"password\": \"securepassword\",\n    \"is_active\": true,\n    \"is_superuser\": false,\n    \"balance\": 1000.00,\n    \"user_type\": \"client\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Auth - Login User",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/x-www-form-urlencoded"
+                    }
+                ],
+                "url": "{{base_url}}/auth/login",
+                "body": {
+                    "mode": "urlencoded",
+                    "urlencoded": [
+                        {
+                            "key": "username",
+                            "value": "1234567890"
+                        },
+                        {
+                            "key": "password",
+                            "value": "securepassword"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Clients - Create Client",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{base_url}}/clients/",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"phone_number\": \"9876543210\",\n    \"password\": \"clientpass\",\n    \"balance\": 500.00\n}"
+                }
+            }
+        },
+        {
+            "name": "Clients - Get All Clients",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": "{{base_url}}/clients/"
+            }
+        },
+        {
+            "name": "Clients - Update Client",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{base_url}}/clients/1",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"balance\": 1200.00\n}"
+                }
+            }
+        },
+        {
+            "name": "Clients - Delete Client",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": "{{base_url}}/clients/1"
+            }
+        },
+        {
+            "name": "Merchants - Create Merchant",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{base_url}}/merchants/",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"phone_number\": \"5566778899\",\n    \"password\": \"merchantpass\",\n    \"code\": \"M1234\",\n    \"balance\": 3000.00\n}"
+                }
+            }
+        },
+        {
+            "name": "Merchants - Get All Merchants",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": "{{base_url}}/merchants/"
+            }
+        },
+        {
+            "name": "Merchants - Update Merchant",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{base_url}}/merchants/1",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"balance\": 5000.00\n}"
+                }
+            }
+        },
+        {
+            "name": "Merchants - Delete Merchant",
+            "request": {
+                "method": "DELETE",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": "{{base_url}}/merchants/1"
+            }
+        },
+        {
+            "name": "Transactions - Create Transaction",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "url": "{{base_url}}/transactions/",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"client_id\": 1,\n    \"merchant_id\": 2,\n    \"amount\": 200.00\n}"
+                }
+            }
+        },
+        {
+            "name": "Transactions - Get All Transactions",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "Bearer {{auth_token}}"
+                    }
+                ],
+                "url": "{{base_url}}/transactions/"
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000"
+        },
+        {
+            "key": "auth_token",
+            "value": ""
+        }
+    ]
+}

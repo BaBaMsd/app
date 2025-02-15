@@ -95,12 +95,243 @@ def get_weekly_orders_summary() -> List[OdooOrderSummary]:
 
     return [OdooOrderSummary(day=day, count=summary["count"], total=summary["total"]) for day, summary in days_summary.items()]
 
-def get_unpaid_orders(email: str):
+# def get_unpaid_orders(email: str):
+#     uid = odoo_authenticate()
+#     if not uid:
+#         raise ValueError("Authentication failed")
+
+#     # Trouver le client par email
+#     response = requests.post(ODOO_URL, json={
+#         "jsonrpc": "2.0",
+#         "method": "call",
+#         "params": {
+#             "service": "object",
+#             "method": "execute_kw",
+#             "args": [
+#                 ODOO_DB, uid, ODOO_PASSWORD,
+#                 'res.partner',
+#                 'search_read',
+#                 [[('email', '=', email)]],
+#                 {'fields': ['id'], 'limit': 1}
+#             ]
+#         },
+#         "id": 1
+#     })
+
+#     customer_data = response.json().get("result", [])
+#     if not customer_data:
+#         return OdooConfirmOrdersResponse(message=f"No customer found with email: {email}", total_unpaid_value=0, orders=[])
+
+#     customer_id = customer_data[0]["id"]
+
+#     # Trouver les commandes non payées en état "sent"
+#     response = requests.post(ODOO_URL, json={
+#         "jsonrpc": "2.0",
+#         "method": "call",
+#         "params": {
+#             "service": "object",
+#             "method": "execute_kw",
+#             "args": [
+#                 ODOO_DB, uid, ODOO_PASSWORD,
+#                 'sale.order',
+#                 'search_read',
+#                 [[('partner_id', '=', customer_id), ('state', '=', 'sent')]],
+#                 {'fields': ['id', 'state', 'amount_total']}
+#             ]
+#         },
+#         "id": 2
+#     })
+
+#     orders = response.json().get("result", [])
+#     if not orders:
+#         return OdooConfirmOrdersResponse(message=f"No unpaid orders found for {email}", total_unpaid_value=0, orders=[])
+
+#     total_unpaid_value = sum(order["amount_total"] for order in orders)
+#     return OdooConfirmOrdersResponse(
+#         message=f"Found {len(orders)} unpaid orders", 
+#         total_unpaid_value=total_unpaid_value, 
+#         orders=[OdooOrder(**order) for order in orders]
+#     )
+
+# def confirm_orders(order_ids: list):
+#     uid = odoo_authenticate()
+#     if not uid:
+#         raise ValueError("Authentication failed")
+
+#     if not order_ids:
+#         return OdooConfirmOrdersResponse(message="No orders to confirm", total_unpaid_value=0, orders=[])
+
+#     # Confirmer les commandes
+#     requests.post(ODOO_URL, json={
+#         "jsonrpc": "2.0",
+#         "method": "call",
+#         "params": {
+#             "service": "object",
+#             "method": "execute_kw",
+#             "args": [
+#                 ODOO_DB, uid, ODOO_PASSWORD,
+#                 'sale.order',
+#                 'action_confirm',
+#                 [order_ids]
+#             ]
+#         },
+#         "id": 3
+#     })
+
+#     # Vérifier l'état des commandes mises à jour
+#     response = requests.post(ODOO_URL, json={
+#         "jsonrpc": "2.0",
+#         "method": "call",
+#         "params": {
+#             "service": "object",
+#             "method": "execute_kw",
+#             "args": [
+#                 ODOO_DB, uid, ODOO_PASSWORD,
+#                 'sale.order',
+#                 'search_read',
+#                 [[('id', 'in', order_ids)]],
+#                 {'fields': ['id', 'state']}
+#             ]
+#         },
+#         "id": 4
+#     })
+
+#     updated_orders = response.json().get("result", [])
+#     return OdooConfirmOrdersResponse(
+#         message=f"Confirmed {len(order_ids)} orders",
+#         total_unpaid_value=0,
+#         orders=[OdooOrder(**order) for order in updated_orders]
+#     )
+
+# # Payment processing and order confirmation
+# def process_payment_and_confirm_orders(client_id: int, merchant_code: str, order_ids: List[int]) -> Optional[dict]:
+#     # Fetch client
+#     client = get_client(client_id)
+#     if not client:
+#         return {"error": "Client not found"}
+
+#     # Fetch merchant by code
+#     merchant = get_merchant_by_code(merchant_code)
+#     if not merchant:
+#         return {"error": "Merchant not found"}
+
+#     # Ensure client exists in db["clients"]
+#     if client_id not in db["clients"]:
+#         return {"error": f"Client with ID {client_id} does not exist"}
+
+#     # Ensure merchant exists in db["merchants"]
+#     if merchant.id not in db["merchants"]:
+#         return {"error": f"Merchant with ID {merchant.id} does not exist"}
+
+#     # Authenticate with Odoo
+#     uid = odoo_authenticate()
+#     if not uid:
+#         raise ValueError("Authentication failed")
+
+#     # Retrieve orders and calculate total cost
+#     response = requests.post(ODOO_URL, json={
+#         "jsonrpc": "2.0",
+#         "method": "call",
+#         "params": {
+#             "service": "object",
+#             "method": "execute_kw",
+#             "args": [
+#                 ODOO_DB, uid, ODOO_PASSWORD,
+#                 'sale.order',
+#                 'search_read',
+#                 [[('id', 'in', order_ids), ('state', '=', 'sent')]],
+#                 {'fields': ['id', 'state', 'amount_total']}
+#             ]
+#         },
+#         "id": 2
+#     })
+
+#     orders = response.json().get("result", [])
+#     if not orders:
+#         return {"error": "No unpaid orders found or incorrect order IDs"}
+
+#     total_order_value = sum(order["amount_total"] for order in orders)
+
+#     # Check if client has enough balance
+#     if client.balance < total_order_value:
+#         return {"error": "Insufficient funds"}
+
+#     # Deduct balance and credit merchant
+#     db["clients"][client_id]["balance"] -= total_order_value
+#     db["merchants"][merchant.id]["balance"] += total_order_value
+
+#     # Confirm the orders
+#     requests.post(ODOO_URL, json={
+#         "jsonrpc": "2.0",
+#         "method": "call",
+#         "params": {
+#             "service": "object",
+#             "method": "execute_kw",
+#             "args": [
+#                 ODOO_DB, uid, ODOO_PASSWORD,
+#                 'sale.order',
+#                 'action_confirm',
+#                 [order_ids]
+#             ]
+#         },
+#         "id": 3
+#     })
+
+#     return {
+#         "message": "Payment processed and orders confirmed",
+#         "client_id": client_id,
+#         "merchant_code": merchant_code,
+#         "total_paid": total_order_value,
+#         "client_new_balance": db["clients"][client_id]["balance"],
+#         "merchant_new_balance": db["merchants"][merchant.id]["balance"],
+#         "confirmed_orders": order_ids
+#     }
+
+import requests
+from sqlalchemy.orm import Session
+from models.models import Client, Merchant, Transaction
+from services.client_service import get_client_by_phone
+from services.merchant_service import get_merchant_by_code
+from models.facture import OdooConfirmOrdersResponse, OdooOrder
+from datetime import datetime
+from typing import List, Optional
+
+# ✅ Odoo Configuration
+ODOO_URL = "http://localhost:8069/jsonrpc"
+ODOO_DB = "demo"
+ODOO_USERNAME = "admin"
+ODOO_PASSWORD = "admin"
+
+# ✅ Authenticate with Odoo
+def odoo_authenticate():
+    response = requests.post(ODOO_URL, json={
+        "jsonrpc": "2.0",
+        "method": "call",
+        "params": {
+            "service": "common",
+            "method": "authenticate",
+            "args": [ODOO_DB, ODOO_USERNAME, ODOO_PASSWORD, {}]
+        },
+        "id": 1
+    })
+    return response.json().get("result")
+
+# ✅ Get Unpaid Orders by Phone Number
+def get_unpaid_orders_by_phone(db: Session, phone_number: str):
     uid = odoo_authenticate()
     if not uid:
         raise ValueError("Authentication failed")
 
-    # Trouver le client par email
+    # ✅ Get client by phone number
+    client = get_client_by_phone(db, phone_number)
+    if not client:
+        return OdooConfirmOrdersResponse(
+            message=f"No client found with phone number: {phone_number}",
+            total_unpaid_value=0,
+            orders=[]
+        )
+
+    # ✅ Find the corresponding Odoo customer ID
     response = requests.post(ODOO_URL, json={
         "jsonrpc": "2.0",
         "method": "call",
@@ -111,7 +342,7 @@ def get_unpaid_orders(email: str):
                 ODOO_DB, uid, ODOO_PASSWORD,
                 'res.partner',
                 'search_read',
-                [[('email', '=', email)]],
+                [[('phone', '=', phone_number)]],
                 {'fields': ['id'], 'limit': 1}
             ]
         },
@@ -120,11 +351,15 @@ def get_unpaid_orders(email: str):
 
     customer_data = response.json().get("result", [])
     if not customer_data:
-        return OdooConfirmOrdersResponse(message=f"No customer found with email: {email}", total_unpaid_value=0, orders=[])
+        return OdooConfirmOrdersResponse(
+            message=f"No customer found in Odoo with phone number: {phone_number}",
+            total_unpaid_value=0,
+            orders=[]
+        )
 
     customer_id = customer_data[0]["id"]
 
-    # Trouver les commandes non payées en état "sent"
+    # ✅ Find unpaid orders
     response = requests.post(ODOO_URL, json={
         "jsonrpc": "2.0",
         "method": "call",
@@ -144,16 +379,21 @@ def get_unpaid_orders(email: str):
 
     orders = response.json().get("result", [])
     if not orders:
-        return OdooConfirmOrdersResponse(message=f"No unpaid orders found for {email}", total_unpaid_value=0, orders=[])
+        return OdooConfirmOrdersResponse(
+            message=f"No unpaid orders found for {phone_number}",
+            total_unpaid_value=0,
+            orders=[]
+        )
 
     total_unpaid_value = sum(order["amount_total"] for order in orders)
     return OdooConfirmOrdersResponse(
-        message=f"Found {len(orders)} unpaid orders", 
-        total_unpaid_value=total_unpaid_value, 
+        message=f"Found {len(orders)} unpaid orders",
+        total_unpaid_value=total_unpaid_value,
         orders=[OdooOrder(**order) for order in orders]
     )
 
-def confirm_orders(order_ids: list):
+# ✅ Confirm Orders
+def confirm_orders(db: Session, order_ids: List[int]):
     uid = odoo_authenticate()
     if not uid:
         raise ValueError("Authentication failed")
@@ -161,7 +401,7 @@ def confirm_orders(order_ids: list):
     if not order_ids:
         return OdooConfirmOrdersResponse(message="No orders to confirm", total_unpaid_value=0, orders=[])
 
-    # Confirmer les commandes
+    # ✅ Confirm Orders in Odoo
     requests.post(ODOO_URL, json={
         "jsonrpc": "2.0",
         "method": "call",
@@ -178,7 +418,7 @@ def confirm_orders(order_ids: list):
         "id": 3
     })
 
-    # Vérifier l'état des commandes mises à jour
+    # ✅ Fetch Updated Orders
     response = requests.post(ODOO_URL, json={
         "jsonrpc": "2.0",
         "method": "call",
@@ -203,86 +443,40 @@ def confirm_orders(order_ids: list):
         orders=[OdooOrder(**order) for order in updated_orders]
     )
 
-# Payment processing and order confirmation
-def process_payment_and_confirm_orders(client_id: int, merchant_code: str, order_ids: List[int]) -> Optional[dict]:
-    # Fetch client
-    client = get_client(client_id)
-    if not client:
-        return {"error": "Client not found"}
-
-    # Fetch merchant by code
-    merchant = get_merchant_by_code(merchant_code)
-    if not merchant:
-        return {"error": "Merchant not found"}
-
-    # Ensure client exists in db["clients"]
-    if client_id not in db["clients"]:
-        return {"error": f"Client with ID {client_id} does not exist"}
-
-    # Ensure merchant exists in db["merchants"]
-    if merchant.id not in db["merchants"]:
-        return {"error": f"Merchant with ID {merchant.id} does not exist"}
-
-    # Authenticate with Odoo
+# ✅ Process Payment and Confirm Orders
+def process_payment_and_confirm_orders(db: Session, phone_number: str, order_ids: List[int]):
     uid = odoo_authenticate()
     if not uid:
         raise ValueError("Authentication failed")
 
-    # Retrieve orders and calculate total cost
-    response = requests.post(ODOO_URL, json={
-        "jsonrpc": "2.0",
-        "method": "call",
-        "params": {
-            "service": "object",
-            "method": "execute_kw",
-            "args": [
-                ODOO_DB, uid, ODOO_PASSWORD,
-                'sale.order',
-                'search_read',
-                [[('id', 'in', order_ids), ('state', '=', 'sent')]],
-                {'fields': ['id', 'state', 'amount_total']}
-            ]
-        },
-        "id": 2
-    })
+    # ✅ Fetch client
+    client = get_client_by_phone(db, phone_number)
+    if not client:
+        return {"error": "Client not found"}
 
-    orders = response.json().get("result", [])
-    if not orders:
+    # ✅ Get unpaid orders
+    unpaid_orders = get_unpaid_orders_by_phone(db, phone_number)
+    if not unpaid_orders.orders:
         return {"error": "No unpaid orders found or incorrect order IDs"}
 
-    total_order_value = sum(order["amount_total"] for order in orders)
+    total_order_value = sum(order.amount_total for order in unpaid_orders.orders if order.id in order_ids)
 
-    # Check if client has enough balance
+    # ✅ Check if client has enough balance
     if client.balance < total_order_value:
         return {"error": "Insufficient funds"}
 
-    # Deduct balance and credit merchant
-    db["clients"][client_id]["balance"] -= total_order_value
-    db["merchants"][merchant.id]["balance"] += total_order_value
+    # ✅ Deduct balance and confirm orders
+    client.balance -= total_order_value
+    db.commit()
 
-    # Confirm the orders
-    requests.post(ODOO_URL, json={
-        "jsonrpc": "2.0",
-        "method": "call",
-        "params": {
-            "service": "object",
-            "method": "execute_kw",
-            "args": [
-                ODOO_DB, uid, ODOO_PASSWORD,
-                'sale.order',
-                'action_confirm',
-                [order_ids]
-            ]
-        },
-        "id": 3
-    })
+    # ✅ Confirm the orders in Odoo
+    confirm_orders(db, order_ids)
 
     return {
         "message": "Payment processed and orders confirmed",
-        "client_id": client_id,
-        "merchant_code": merchant_code,
+        "client_id": client.id,
+        "phone_number": phone_number,
         "total_paid": total_order_value,
-        "client_new_balance": db["clients"][client_id]["balance"],
-        "merchant_new_balance": db["merchants"][merchant.id]["balance"],
+        "client_new_balance": client.balance,
         "confirmed_orders": order_ids
     }
