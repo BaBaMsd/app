@@ -47,6 +47,9 @@ def get_clients_list(db: Session) -> List[Client]:
 def get_client_by_phone(db: Session, phone_number: str) -> Optional[Client]:
     return db.query(Client).filter(Client.phone_number == phone_number).first()
 
+def get_client_by_nni(db: Session, nni: str) -> Optional[Client]:
+    return db.query(Client).filter(Client.nni == nni).first()
+
 # ✅ Create a new client
 def create_client(db: Session, client_data: ClientCreate) -> Client:
     new_client = Client(
