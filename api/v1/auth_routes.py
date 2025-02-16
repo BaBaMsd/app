@@ -17,31 +17,43 @@
 # def login_user_route(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
 #     return login(db, form_data)
 
-from fastapi import APIRouter, Depends, Request, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from models.database import get_db
 from models.schemas import UserOut
-from services.auth import get_current_user, login
+from services.auth import authenticate_user, get_current_user, login
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="templates2")
 
 @router.get("/")
 def login(request: Request,):
         return templates.TemplateResponse("login.html", {"request": request, "error": "Identifiants invalides"})
 
+@router.get("/register")
+def login(request: Request,):
+        return templates.TemplateResponse("register.html", {"request": request, "error": "Identifiants invalides"})
 
-# ✅ Connexion de l'utilisateur
+
+
+
+
+# ✅ Login Route
+from fastapi.responses import RedirectResponse
+
 @router.post("/login")
 def login_user(request: Request, db: Session = Depends(get_db), username: str = Form(...), password: str = Form(...)):
-    user = login(db, username, password)
+    user = authenticate_user(db, username, password)
+
     if not user:
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Identifiants invalides"})
-    
-    response = RedirectResponse(url="/", status_code=303)
-    response.set_cookie("session", user.token)
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    response = RedirectResponse(url="/home", status_code=303)
+    response.set_cookie(key="session", value=user["token"], httponly=True, secure=False)
+
+    print("🔹 Token stored in cookie:", user["token"])  # ✅ Debugging
     return response
 
 
