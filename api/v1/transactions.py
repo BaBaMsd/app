@@ -3,8 +3,6 @@ from requests import Session
 from models.database import get_db
 from models.schemas import TransactionCreate
 from services.transaction_service import process_payment
-from core.security import verify_token
-from models.transaction import PaymentRequest
 
 router = APIRouter()
 

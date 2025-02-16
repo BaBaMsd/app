@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Welcome, {{ user.name }}</h2>
+    <p>Phone: {{ user.phone_number }}</p>
+    <p>Balance: ${{ user.balance }}</p>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Transfer to Client</h3>
+            <form method="POST" action="/transactions/transfer">
+                <label>Recipient Phone:</label>
+                <input type="text" name="recipient_phone" required>
+
+                <label>Amount:</label>
+                <input type="number" name="amount" required>
+
+                <button type="submit">Transfer</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Make a Payment</h3>
+            <form method="POST" action="/transactions/pay">
+                <label>Merchant Code:</label>
+                <input type="text" name="merchant_code" required>
+
+                <label>Amount:</label>
+                <input type="number" name="amount" required>
+
+                <button type="submit">Pay</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
