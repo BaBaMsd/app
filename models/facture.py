@@ -9,7 +9,6 @@ class OdooProduct(BaseModel):
 
 class OdooOrder(BaseModel):
     id: int
-    date_order: str
     amount_total: float
 
 class OdooOrderSummary(BaseModel):
