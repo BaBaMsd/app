@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Replace with your PostgreSQL credentials
-DATABASE_URL = "postgresql+psycopg2://postgres:password@localhost:5432/paydb"
+DATABASE_URL = "postgresql+psycopg2://postgres:admin@localhost/db_pay_odoo"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
